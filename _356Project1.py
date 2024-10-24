@@ -21,7 +21,6 @@ class Car:
             while self.pos < 4:
 
                 #sleep timer is used to detemine speed
-                #sleep timer is alo reused to simulate busy waiting
                 time.sleep(random.randint(1, 6))
 
                 if Car.race_Over:
@@ -34,7 +33,17 @@ class Car:
                     self.increase_pos()
                     Car.mutex_lock = False
                 else:
-                    print(f"car {self.symbol}'s movement was momentarily blocked")
+                    print(f"\ncar {self.symbol}'s movement was momentarily blocked: busy waiting")
+                    #busy waiting checking every 0.1 seconds
+                    while(Car.mutex_lock == True):
+                        time.sleep(0.1)
+
+                    Car.mutex_lock = True
+                    #critical seciton
+                    self.increase_pos()
+                    Car.mutex_lock = False
+
+                    
 
             if Car.race_Over == False: 
                 Car.race_Over = True
