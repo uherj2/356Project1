@@ -1,5 +1,4 @@
 from asyncio import Semaphore
-from imp import acquire_lock, release_lock
 import time
 from datetime import datetime
 import random
@@ -9,23 +8,42 @@ start_time = time.time()
 
 class Car:
 
+    #initialize mutex_lock as a static variable and as false
+    mutex_lock = False
+
     def __init__(self, row, symbol):
+
+        
         self.pos = 0
         self.row = row
         self.symbol = symbol
 
     def start(self):
         while self.pos < 4:
-            time.sleep(random.randint(1, 10))
-            self.increase_pos()
+
+            #sleep timer is used to simulate busy waiting
+            time.sleep(random.randint(1, 6))
+
+            if Car.mutex_lock == False:
+                #critical section
+                Car.mutex_lock = True
+                self.increase_pos()
+                Car.mutex_lock = False
+            else:
+                print(f"car {self.symbol}'s movement was momentairly blocked")
 
     def increase_pos(self):
+        #blank line
+        print()
+
+        #test for mutex lock
+        time.sleep(random.randint(1, 3))
 
         if random.randint(1, 10) < 5:
             # change lanes
-            print(f"\nCar {self.symbol} change lanes")
+            print(f"Car {self.symbol} changes lanes")
            
-            acquire_lock #mutex for accessing the grid
+            
             if self.row == 0: #checks if space is empty
                 if arr[1][self.pos] == 0: 
                     arr[self.row][self.pos] = 0
@@ -40,22 +58,17 @@ class Car:
                     arr[self.row][self.pos] = self.symbol
                 else:
                     print("Car",self.symbol,"tried to switch lanes but was blocked")
-            release_lock
-            
-
-        acquire_lock
+           
         if arr[self.row][self.pos + 1] == 0: #checks if spot ahead is empty
             arr[self.row][self.pos] = 0
             self.pos = self.pos + 1
             arr[self.row][self.pos] = self.symbol
-            print(f"\nCar {self.symbol} moves")
+            print(f"Car {self.symbol} moves")
         else: 
-            print(f"\nCar {self.symbol} tried to move but was blocked")
+            print(f"Car {self.symbol} tried to move but was blocked")
 
         print(time.time() - start_time)
         print_arr()
-
-        release_lock
 
 def print_arr():
     for row in arr:
@@ -71,9 +84,11 @@ arr = [[0 for i in range(cols)] for j in range(rows)]
 arr[0][0] = 1
 arr[1][0] = 2
 
-
 car_1 = Car(0, 1)
 car_2 = Car(1, 2)
+
+#initialize mutex lock before threading starts
+
 t1 = threading.Thread(target=car_1.start)
 t2 = threading.Thread(target=car_2.start)
 
