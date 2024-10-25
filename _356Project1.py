@@ -17,8 +17,8 @@ class Car:
         self.pos = 0
         self.row = row
         self.symbol = symbol
-        
-        arr = arr
+    
+        self.arr = arr
 
     def start(self):
             while self.pos < 9: # Array Column count - 1
@@ -28,7 +28,6 @@ class Car:
 
                 #checks to see if race is over
                 if Car.race_Over:
-                    print(f"Car {self.symbol} realizes the race is over")
                     break
 
                 # Mutex lock protects the shared array by limiting access to one car a time
@@ -73,24 +72,24 @@ class Car:
         
             
             if self.row == 0: #checks if space is empty
-                if arr[1][self.pos] == 0: 
-                    arr[self.row][self.pos] = 0
+                if self.arr[1][self.pos] == 0: 
+                    self.arr[self.row][self.pos] = 0
                     self.row = 1 #sets row to the row we just checked
-                    arr[self.row][self.pos] = self.symbol #changing the array
+                    self.arr[self.row][self.pos] = self.symbol #changing the self.array
                 else:
                     print("Car",self.symbol,"tried to switch lanes but was blocked")
             else:
-                if arr[0][self.pos] == 0: 
-                    arr[self.row][self.pos] = 0
+                if self.arr[0][self.pos] == 0: 
+                    self.arr[self.row][self.pos] = 0
                     self.row = 0 
-                    arr[self.row][self.pos] = self.symbol
+                    self.arr[self.row][self.pos] = self.symbol
                 else:
                     print("Car",self.symbol,"tried to switch lanes but was blocked")
         
-        if arr[self.row][self.pos + 1] == 0: #checks if spot ahead is empty
-            arr[self.row][self.pos] = 0
+        if self.arr[self.row][self.pos + 1] == 0: #checks if spot ahead is empty
+            self.arr[self.row][self.pos] = 0
             self.pos = self.pos + 1
-            arr[self.row][self.pos] = self.symbol
+            self.arr[self.row][self.pos] = self.symbol
             print(f"Car {self.symbol} moves")
         else: 
             print(f"Car {self.symbol} tried to move but was blocked")
@@ -98,8 +97,8 @@ class Car:
         print(f"Time: {int(time.time() - start_time)} seconds")
         self.print_arr()
 
-    def print_arr(seltempf):
-        for row in arr:
+    def print_arr(self):
+        for row in self.arr:
             print(row)
 
 
