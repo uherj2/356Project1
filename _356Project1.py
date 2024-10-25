@@ -18,7 +18,7 @@ class Car:
         self.symbol = symbol
 
     def start(self):
-            while self.pos < 4:
+            while self.pos < 9:
 
                 #sleep timer is used to detemine speed
                 time.sleep(random.randint(1, 6))
@@ -42,8 +42,6 @@ class Car:
                     #critical seciton
                     self.increase_pos()
                     Car.mutex_lock = False
-
-                    
 
             if Car.race_Over == False: 
                 Car.race_Over = True
@@ -84,7 +82,7 @@ class Car:
         else: 
             print(f"Car {self.symbol} tried to move but was blocked")
 
-        print(time.time() - start_time)
+        print(f"Time: {int(time.time() - start_time)} seconds")
         print_arr()
 
 def print_arr():
@@ -94,7 +92,7 @@ def print_arr():
 
 # initialize 2d arrayj
 global rows, cols
-rows, cols = (2, 5)
+rows, cols = (2, 10)
 arr = [[0 for i in range(cols)] for j in range(rows)]
 
 arr[0][0] = 1
