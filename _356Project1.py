@@ -13,10 +13,12 @@ class Car:
     mutex_lock = False
     race_Over = False
 
-    def __init__(self, row, symbol):
+    def __init__(self, row, symbol, arr):
         self.pos = 0
         self.row = row
         self.symbol = symbol
+        
+        arr = arr
 
     def start(self):
             while self.pos < 9: # Array Column count - 1
@@ -94,15 +96,16 @@ class Car:
             print(f"Car {self.symbol} tried to move but was blocked")
 
         print(f"Time: {int(time.time() - start_time)} seconds")
-        print_arr()
+        self.print_arr()
 
-def print_arr():
-    for row in arr:
-        print(row)
+    def print_arr(seltempf):
+        for row in arr:
+            print(row)
 
 
 # initialize 2d array
 # game currently works with two Cars: change lane function will have to be updated to work with more
+
 global rows, cols
 rows, cols = (2, 10)
 arr = [[0 for i in range(cols)] for j in range(rows)]
@@ -110,8 +113,8 @@ arr = [[0 for i in range(cols)] for j in range(rows)]
 arr[0][0] = 1
 arr[1][0] = 2
 
-car_1 = Car(0, 1)
-car_2 = Car(1, 2)
+car_1 = Car(0, 1, arr)
+car_2 = Car(1, 2, arr)
 
 t1 = threading.Thread(target=car_1.start)
 t2 = threading.Thread(target=car_2.start)
