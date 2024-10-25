@@ -8,7 +8,8 @@ start_time = time.time()
 
 class Car:
 
-    #initialize mutex_lock as a static variable and as false
+    # initialize mutex_lock as a static variable and as false
+    # True and False is used instead of 0 and 1 in examples
     mutex_lock = False
     race_Over = False
 
@@ -18,14 +19,19 @@ class Car:
         self.symbol = symbol
 
     def start(self):
-            while self.pos < 9:
+            while self.pos < 9: # Array Column count - 1
 
                 #sleep timer is used to detemine speed
                 time.sleep(random.randint(1, 6))
 
+                #checks to see if race is over
                 if Car.race_Over:
                     print(f"Car {self.symbol} realizes the race is over")
                     break
+
+                # Mutex lock protects the shared array by limiting access to one car a time
+                # If a car is blocked from accessing the array, it does busy waiting
+                # The car gets to move immedietly afterward for sake of fairness
 
                 if Car.mutex_lock == False:
                     Car.mutex_lock = True
@@ -43,9 +49,14 @@ class Car:
                     self.increase_pos()
                     Car.mutex_lock = False
 
+            # This is acting as another more simplified mutex lock
+            # Since only one car needs to access the critical section (finishing the race),
+            # Once race_over is declared True, the other car cannot access critical section and the game ends
             if Car.race_Over == False: 
                 Car.race_Over = True
                 print(f"game finished car {self.symbol} won the race!")
+            else:
+                print(f"Car {self.symbol} realizes the race is over")
 
     def increase_pos(self):
         #test for mutex lock: slows down process so it has the opportunity to block
@@ -90,7 +101,8 @@ def print_arr():
         print(row)
 
 
-# initialize 2d arrayj
+# initialize 2d array
+# game currently works with two Cars: change lane function will have to be updated to work with more
 global rows, cols
 rows, cols = (2, 10)
 arr = [[0 for i in range(cols)] for j in range(rows)]
