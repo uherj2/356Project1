@@ -67,7 +67,7 @@ class AbstractCars:
 
     #from project code
     def start(self):
-        while self.pos < 4:
+        while self.pos < 9:
 
             # sleep timer is used to detemine speed
             time.sleep(random.randint(1, 6))
@@ -127,17 +127,12 @@ class AbstractCars:
             self.pos = self.pos + 1
             arr[self.row][self.pos] = self.symbol
             print(f"Car {self.symbol} moves")
-            for i in range(0,10):
+            for i in range(0,20):
                 print("im trying to move")
                 #
-                radians = math.radians(self.angle)
-                vertical = math.cos(radians) * self.vel
-                horizontal = math.sin(radians) * self.vel
-
-                self.y -= vertical
-                self.x -= horizontal
+                self.move_forward()
                 #
-                time.sleep(.1)
+                time.sleep(.01)
         else:
             print(f"Car {self.symbol} tried to move but was blocked")
 
@@ -223,13 +218,13 @@ def print_arr():
         print(row)
 
 global rows, cols
-rows, cols = (2, 5)
+rows, cols = (2, 10)
 arr = [[0 for i in range(cols)] for j in range(rows)]
 
 arr[0][0] = 1
 arr[1][0] = 2
 
-arr[random.randint(0,1)][random.randint(1,3)]=3 #obsticle
+arr[random.randint(0,1)][random.randint(1,8)]=3 #obsticle
 #end from project code
 won = False
 
@@ -274,25 +269,26 @@ while runMultiplayer:
         won = True
 
 if runSimulation:
-    clock.tick(FPS)
-
-    draw(WINDOW, images, created_car, created_car2)
-
-    WINDOW.blit(GRASS, (0,0)) # display grass in window
-    WINDOW.blit(TRACK,(0,0)) # display track
-    WINDOW.blit(Car1,(0,0)) # display car 1
-    WINDOW.blit(Car2,(0,0)) # display car 2
-
-    #from project code
+    # from project code
     t1 = threading.Thread(target=created_car.start)
     t2 = threading.Thread(target=created_car2.start)
     t1.start()
     t2.start()
-    #end from project code
+    # end from project code
     while runSimulation:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-                break
+        clock.tick(FPS)
+
+        draw(WINDOW, images, created_car, created_car2)
+
+        WINDOW.blit(GRASS, (0, 0))  # display grass in window
+        WINDOW.blit(TRACK, (0, 0))  # display track
+        WINDOW.blit(Car1, (0, 0))  # display car 1
+        WINDOW.blit(Car2, (0, 0))  # display car 2
+
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+            break
 
 pygame.quit
