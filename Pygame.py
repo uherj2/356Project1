@@ -1,13 +1,31 @@
-import pygame
-import time
+from asyncio import Semaphore
 import math
+import time
+import threading
+from datetime import datetime
+import random
+import pygame
 from utils import scale_image, blit_rotate_center
 
 # Import pngs
 # track and track border must be scaled the same (9 is placeholder)
+
+inp = input("type  M for Multiplayer, S for Simulation")
+try:
+    if inp == "m":
+        runMultiplayer=True
+    if inp == "s":
+        runSimulation=True
+    print("You entered:", inp)
+except KeyboardInterrupt:
+    print("\nProgram interrupted. Exiting gracefully.")
+
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
 
-TRACK = scale_image(pygame.image.load("imgs/pixilart-track.png"), 9)  
+POWERUP = scale_image(pygame.image.load("imgs/powerup.png"), 2.5)
+ROADBLOCK = scale_image(pygame.image.load("imgs/tire.png"), 2.5)
+
+TRACK = scale_image(pygame.image.load("imgs/pixilart-track.png"), 9)
 
 TRACK_BORDER = scale_image(pygame.image.load("imgs/pixilart-emptyTrack.png"), 9)
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
@@ -111,13 +129,14 @@ def move_player2(player_car):
 
 
 won = False
-run = True
+
 clock = pygame.time.Clock()
 images = [(GRASS, (0,0)), (TRACK, (0,0)), (FINISH, FINISH_POSITION)]
 created_car = CreateCar(4, 4) # (4, 4) placeholder velocity   # player_car
 created_car2 = CreateCar2(4, 4)
 
-while run:
+
+while runMultiplayer:
     clock.tick(FPS)
 
     draw(WINDOW, images, created_car, created_car2)
@@ -132,6 +151,7 @@ while run:
         if event.type == pygame.QUIT:
             run = False
             break
+
 
     move_player1(created_car)
     move_player2(created_car2)
