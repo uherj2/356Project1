@@ -9,7 +9,9 @@ from utils import scale_image, blit_rotate_center
 
 # Import pngs
 # track and track border must be scaled the same (9 is placeholder)
-
+start_time = time.time()
+runMultiplayer = False
+runSimulation = False
 inp = input("type  M for Multiplayer, S for Simulation")
 try:
     if inp == "m":
@@ -45,8 +47,11 @@ pygame.display.set_caption("Multithreading Car Race")
 FPS = 60
 
 class AbstractCars: 
-
-    def __init__(self, max_vel, rotation_vel):
+    #from project code
+    mutex_lock = False
+    race_Over = False
+    #end from project code
+    def __init__(self, max_vel, rotation_vel, row, symbol):
         self.img = self.IMG
         self.max_vel = max_vel
         self.vel = 0
@@ -54,7 +59,92 @@ class AbstractCars:
         self.angle = 0
         self.x, self.y = self.START_POS
         self.acceleration = .1
+        #from project code
+        self.pos = 0
+        self.row = row
+        self.symbol = symbol
+        #end from project code
 
+    #from project code
+    def start(self):
+        while self.pos < 4:
+
+            # sleep timer is used to detemine speed
+            time.sleep(random.randint(1, 6))
+
+            if AbstractCars.race_Over:
+                print(f"Car {self.symbol} realizes the race is over")
+                break
+
+            if AbstractCars.mutex_lock == False:
+                AbstractCars.mutex_lock = True
+                # critical section
+                self.increase_pos()
+                AbstractCars.mutex_lock = False
+            else:
+                print(f"\ncar {self.symbol}'s movement was momentarily blocked: busy waiting")
+                # busy waiting checking every 0.1 seconds
+                while (AbstractCars.mutex_lock == True):
+                    time.sleep(0.1)
+
+                AbstractCars.mutex_lock = True
+                # critical seciton
+                self.increase_pos()
+                AbstractCars.mutex_lock = False
+
+        if AbstractCars.race_Over == False:
+            AbstractCars.race_Over = True
+            print(f"game finished car {self.symbol} won the race!")
+
+    def increase_pos(self):
+        # test for mutex lock: slows down process so it has the opportunity to block
+        time.sleep(1)
+
+        # blank line
+        print()
+
+        if random.randint(1, 10) < 5:
+            # change lanes
+            print(f"Car {self.symbol} changes lanes")
+
+            if self.row == 0:  # checks if space is empty
+                if arr[1][self.pos] == 0:
+                    arr[self.row][self.pos] = 0
+                    self.row = 1  # sets row to the row we just checked
+                    arr[self.row][self.pos] = self.symbol  # changing the array
+                else:
+                    print("Car", self.symbol, "tried to switch lanes but was blocked")
+            else:
+                if arr[0][self.pos] == 0:
+                    arr[self.row][self.pos] = 0
+                    self.row = 0
+                    arr[self.row][self.pos] = self.symbol
+                else:
+                    print("Car", self.symbol, "tried to switch lanes but was blocked")
+
+        if arr[self.row][self.pos + 1] == 0:  # checks if spot ahead is empty
+            arr[self.row][self.pos] = 0
+            self.pos = self.pos + 1
+            arr[self.row][self.pos] = self.symbol
+            print(f"Car {self.symbol} moves")
+            for i in range(0,10):
+                print("im trying to move")
+                #
+                radians = math.radians(self.angle)
+                vertical = math.cos(radians) * self.vel
+                horizontal = math.sin(radians) * self.vel
+
+                self.y -= vertical
+                self.x -= horizontal
+                #
+                time.sleep(.1)
+        else:
+            print(f"Car {self.symbol} tried to move but was blocked")
+
+        print(time.time() - start_time)
+        print_arr()
+
+    #end from project code
     def rotate(self, left=False, right=False):
         if left:
             self.angle += self.rotation_vel
@@ -110,30 +200,43 @@ def draw(win, images, created_car, created_car2):
 def move_player1(player_car):
     keys = pygame.key.get_pressed()
     
-    if keys[pygame.K_j]:    
+    if keys[pygame.K_j] & runMultiplayer:
         player_car.rotate(left=True)   # turn left
-    if keys[pygame.K_l]:
+    if keys[pygame.K_l] & runMultiplayer:
         player_car.rotate(right=True)  #turn right
-    if keys[pygame.K_i]:
+    if keys[pygame.K_i] & runMultiplayer:
         player_car.move_forward()
 
 def move_player2(player_car):
     keys = pygame.key.get_pressed()
     
-    if keys[pygame.K_a]:    
+    if keys[pygame.K_a] & runMultiplayer:
         player_car.rotate(left=True)  
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] & runMultiplayer:
         player_car.rotate(right=True)  
-    if keys[pygame.K_w]:
+    if keys[pygame.K_w] & runMultiplayer:
         player_car.move_forward()
 
+#from  project code
+def print_arr():
+    for row in arr:
+        print(row)
 
+global rows, cols
+rows, cols = (2, 5)
+arr = [[0 for i in range(cols)] for j in range(rows)]
+
+arr[0][0] = 1
+arr[1][0] = 2
+
+arr[random.randint(0,1)][random.randint(1,3)]=3 #obsticle
+#end from project code
 won = False
 
 clock = pygame.time.Clock()
 images = [(GRASS, (0,0)), (TRACK, (0,0)), (FINISH, FINISH_POSITION)]
-created_car = CreateCar(4, 4) # (4, 4) placeholder velocity   # player_car
-created_car2 = CreateCar2(4, 4)
+created_car = CreateCar(4, 4,0,1) # (4, 4) placeholder velocity   # player_car
+created_car2 = CreateCar2(4, 4,1,2)
 
 
 while runMultiplayer:
@@ -169,5 +272,27 @@ while runMultiplayer:
     if created_car2.collide(FINISH_MASK, *FINISH_POSITION) != None:
         print("Player 2 Wins!")
         won = True
+
+if runSimulation:
+    clock.tick(FPS)
+
+    draw(WINDOW, images, created_car, created_car2)
+
+    WINDOW.blit(GRASS, (0,0)) # display grass in window
+    WINDOW.blit(TRACK,(0,0)) # display track
+    WINDOW.blit(Car1,(0,0)) # display car 1
+    WINDOW.blit(Car2,(0,0)) # display car 2
+
+    #from project code
+    t1 = threading.Thread(target=created_car.start)
+    t2 = threading.Thread(target=created_car2.start)
+    t1.start()
+    t2.start()
+    #end from project code
+    while runSimulation:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                break
 
 pygame.quit
