@@ -58,7 +58,7 @@ class AbstractCars:
         self.rotation_vel = rotation_vel
         self.angle = 0
         self.x, self.y = self.START_POS
-        self.acceleration = .1
+        self.acceleration = 1
         #from project code
         self.pos = 0
         self.row = row
@@ -67,7 +67,7 @@ class AbstractCars:
 
     #from project code
     def start(self):
-        while self.pos < 9:
+        while self.pos < 7:
 
             # sleep timer is used to detemine speed
             time.sleep(random.randint(1, 6))
@@ -112,14 +112,42 @@ class AbstractCars:
                     arr[self.row][self.pos] = 0
                     self.row = 1  # sets row to the row we just checked
                     arr[self.row][self.pos] = self.symbol  # changing the array
+                    for i in range(0,23):
+                        self.rotate(left=True)
+                        time.sleep(.01)
+                    for i in range(0,75):
+                        self.move_forward()
+                        time.sleep(.01)
+                    for i in range(0,23):
+                        self.rotate(right=True)
                 else:
+                    for i in range(0,10):
+                        self.rotate(left=True)
+                        time.sleep(.01)
+                    for i in range(0, 10):
+                        self.rotate(right=True)
+                        time.sleep(.01)
                     print("Car", self.symbol, "tried to switch lanes but was blocked")
             else:
                 if arr[0][self.pos] == 0:
                     arr[self.row][self.pos] = 0
                     self.row = 0
                     arr[self.row][self.pos] = self.symbol
+                    for i in range(0,23):
+                        self.rotate(right=True)
+                        time.sleep(.01)
+                    for i in range(0,75):
+                        self.move_forward()
+                        time.sleep(.01)
+                    for i in range(0,23):
+                        self.rotate(left=True)
                 else:
+                    for i in range(0,10):
+                        self.rotate(right=True)
+                        time.sleep(.01)
+                    for i in range(0, 10):
+                        self.rotate(left=True)
+                        time.sleep(.01)
                     print("Car", self.symbol, "tried to switch lanes but was blocked")
 
         if arr[self.row][self.pos + 1] == 0:  # checks if spot ahead is empty
@@ -127,8 +155,7 @@ class AbstractCars:
             self.pos = self.pos + 1
             arr[self.row][self.pos] = self.symbol
             print(f"Car {self.symbol} moves")
-            for i in range(0,20):
-                print("im trying to move")
+            for i in range(0,25):
                 #
                 self.move_forward()
                 #
@@ -218,11 +245,12 @@ def print_arr():
         print(row)
 
 global rows, cols
-rows, cols = (2, 10)
+rows, cols = (2, 8)
 arr = [[0 for i in range(cols)] for j in range(rows)]
 
 arr[0][0] = 1
 arr[1][0] = 2
+
 
 arr[random.randint(0,1)][random.randint(1,8)]=3 #obsticle
 #end from project code
