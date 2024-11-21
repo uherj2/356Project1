@@ -7,6 +7,16 @@ import socket
 import threading
 import time
 
+id = set([])
+
+def add_connection_id(connectionid):
+    id.add(connectionid)
+    print(f'id added {id}')
+    time.sleep(60)
+    id.remove(connectionid)
+    print(f'id removed {id}')
+
+
 def handle_connection(cs, addr):
     try: 
         print(f'cs: {cs}')
@@ -15,6 +25,17 @@ def handle_connection(cs, addr):
         while msg and msg[-1] != '\n':
             msg += cs.recv(256).decode('utf-8')
         print(msg)
+
+        if msg[0].isdigit():
+            connectionid = int(msg[0])
+            if connectionid in id:
+                cs.send(f'connection id already in use\n'.encode(utf-8))
+                print(f'connection id already in use')
+            else:
+                idthread = threading.Thread(target=add_connection_id, args=[connectionid])
+                idthread.daemon = True
+                idthread.start()
+                cs.send(f'your connection id is: {connectionid}'.encode('utf-8'))
     except Exception as e:
         print(f'Exception while receiving or sending: {e}')
     finally:
@@ -22,11 +43,11 @@ def handle_connection(cs, addr):
         cs.close()
 
 
-try:
+try:    
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # This says hey you can reuse the socket after the program is done
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.settimeout(300)
+    s.settimeout(90)
     s.bind(('', int(sys.argv[1])))
     print(f'listening on port {int(sys.argv[1])}')
     s.listen(5)  # 5 is the number of connections to keep in a queue
