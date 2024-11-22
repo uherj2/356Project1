@@ -1,0 +1,75 @@
+Ok here is the big idea:
+
+I think we can get away with having the entire ui on the command line given that everything else works correctly
+We can always add more stuff after we have the basic functionality down
+
+
+
+Message Auth:
+
+Before the user logs in they are presented the option to either log in or sign up
+
+Sign up
+add username and hashed password to the db
+give error if 
+- username is already taken
+- password does not meet qualifications to be stored in the database (ex. character limit)
+
+Log in
+check to see if username is in the db
+verify hashed password
+
+
+
+Chat room:
+
+Here's the plan for right now
+
+There will be no "rooms"
+
+A user will be presented a list of other users
+In thier message format the user will be able to specify who to send to -
+
+"Enter recipient: "
+"Enter message: "
+
+For now all of the messages will be printed on the same screen
+
+
+
+Database:
+
+The database needs to store usernames and passwords 
+This can be done in whatever way is easiest it just needs to do the following - 
+Store usernames and hashed passwords
+Verify passwords given a specified username and password
+The rubrick also says that this needs to be specified with segmentation and paging and needs to follow concurrency principles
+
+The database also needs to store current users and their connection ids
+
+So really this part is just creating hashmaps or lists and making functions to store info in the list and locate info and remove it
+
+
+Heres where things get weird:
+
+The rubrick specifies a "MMU" simulation where the client can allocate memory and then deallocate it. 
+My issue with this is that it is doesn't make sense to implement it in the context of our messaging app because:
+1. the user should be able to access their account from multiple devices so the location of a username cannot be stored on the client
+2. the user will already be storing a dabase with the allocated addresses so it wouldn't make sense to store the passwords in a separate location. 
+
+My solution is to either 
+1: ignore it 
+2: simulate MMU on the side by adding a function on the client to allocate and deallocate memory and have a separate db for it
+3: have a db on the client side that stores usernames and the location of passwords on the server, and then query the server for the passwords (of course these are just hashes)
+
+since the rubrick specifies that the client is making the queries I assume the idea is that the server has its own specified space for adding users
+(so it would be the same)  
+
+This would mean that the db (MMU) would be taking in addresses and 'data' (passwords) rather than usernames and passwords. The rubrick says that it would
+also be taking in an 'allocation size' which would just be a random number. I do not know if that number has to mean anything.
+
+I sent the prof an email asking about it and she hasn't responded yet. I am leaning towards just simulating MMU allocation without having it be functional
+towards user auth or sending messages. It would act as a bonus feature that doesn't really do anything. We can worry about it after the basic app is finsihed.
+
+
+ 
