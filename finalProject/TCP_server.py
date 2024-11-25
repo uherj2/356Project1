@@ -7,7 +7,13 @@ import socket
 import threading
 import time
 
-id = set([])
+id = set()
+
+def send_all(sender):
+    for connectionid in id:
+        cs = connectionid[1]
+        print(f'cs: {cs}')
+        cs.send(f'{sender}: Hello\n'.encode('utf-8'))
 
 def add_connection_id(connectionid):
     id.add(connectionid)
@@ -27,15 +33,17 @@ def handle_connection(cs, addr):
         print(msg)
 
         if msg[0].isdigit():
-            connectionid = int(msg[0])
-            if connectionid in id:
-                cs.send(f'connection id already in use\n'.encode(utf-8))
+            connectionid = (int(msg[0]), cs)
+            if connectionid[0] in (item[0] for item in id):
+                cs.send(f'connection id already in use\n'.encode('utf-8'))
                 print(f'connection id already in use')
             else:
                 idthread = threading.Thread(target=add_connection_id, args=[connectionid])
                 idthread.daemon = True
                 idthread.start()
-                cs.send(f'your connection id is: {connectionid}'.encode('utf-8'))
+                cs.send(f'your connection id is: {connectionid[0]}\n'.encode('utf-8'))
+                send_all(connectionid[0])
+                time.sleep(20)
     except Exception as e:
         print(f'Exception while receiving or sending: {e}')
     finally:
