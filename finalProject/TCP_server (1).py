@@ -188,16 +188,17 @@ def handle_connection(cs, addr):
             if data['action']=="message":
                 rec = data['recipient']
                 rec = rec.strip()
-                msg  = data['message']
-                msg = msg.strip()
-                print(rec,msg)
-                send_user(msg,rec)
+                if rec in active_users:
+                    msg  = data['message']
+                    msg = msg.strip()
+                    print(rec,msg)
+                    send_user(msg,rec)
             elif data['action']=="stop":
                 print("User stopped")
                 running = False
             else:
                 print("JSON Packet ERROR")
-                #cs.send("JSON Packet ERROR!:\n".encode('utf-8'))
+                cs.send("JSON Packet ERROR!:\n".encode('utf-8'))
 
 
 
