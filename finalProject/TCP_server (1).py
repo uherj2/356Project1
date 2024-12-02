@@ -13,6 +13,8 @@ user_db = {}  # username: hashed_password
 
 active_users = {}  # username: connection_id
 
+active_connections = {} # username : cs
+
 # lock for thread-safety
 db_lock = threading.Lock()
 
@@ -38,11 +40,12 @@ def verify_user(username: str, password: str) -> bool:
         return user_db[username] == hash_password(password)
 
 # add to active users with connection id
-def add_active_user(username: str, connection_id: int):
+def add_active_user(username: str, connection_id: int, cs):
     with db_lock:
         if username in active_users:
             return f"User {username} is already active"
         active_users[username] = connection_id
+        active_connections[username] = cs
         return f"User {username} is now active with connection id {connection_id}"
 
 def del_active_user(username: str):
@@ -90,6 +93,11 @@ def send_all(sender):
         cs = connectionid[1]
         print(f'cs: {cs}')
         cs.send(f'{sender}: Hello\n'.encode('utf-8'))
+
+def send_user(message, recipient):
+    cs = active_connections[recipient]
+    print(f'cs: {cs}')
+    cs.send(f'{message}: Hello\n'.encode('utf-8'))
 
 def add_connection_id(connectionid):
     id.add(connectionid)
@@ -139,7 +147,9 @@ def handle_connection(cs, addr):
                     psw = psw.strip()
                     print(psw)
                     print("User added")
-                    add_active_user(usr, connectionid[0])
+                    #adding new user into the system
+                    store_user("Username", "Password")
+                    add_active_user(usr, connectionid[0], connectionid[1])
                     cs.send("Successfully added and signed into server\n".encode('utf-8'))
                     # exit loop
                     prompt = False
@@ -156,7 +166,7 @@ def handle_connection(cs, addr):
                 print(psw)
                 if verify_user(usr, psw):
                     print("User verified")
-                    add_active_user(usr, connectionid[0])
+                    add_active_user(usr, connectionid[0], connectionid[1])
                     cs.send("Successfully signed into server\n".encode('utf-8'))
                     # exit loop
                     prompt = False
@@ -166,6 +176,21 @@ def handle_connection(cs, addr):
                     cs.close()
             else:
                 cs.send("Error: neither option selected correctly.\n".encode('utf-8'))
+        #sending messages
+        running = True
+        while running == True:
+            cs.send(f"Active Users: {list_active_users()}\n".encode('utf-8'))
+            cs.send("Enter recipient or type 'STOP':\n".encode('utf-8'))
+            rec = cs.recv(256).decode('utf-8')
+            #break process
+            if(rec.strip()=="STOP"):
+                cs.send("STOP\n".encode('utf-8'))
+                print("User stopped")
+                running = False
+            else:
+                cs.send("Enter message:\n".encode('utf-8'))
+                msg = cs.recv(256).decode('utf-8')
+                send_user(msg,rec.strip())
 
 
     except Exception as e:
@@ -182,9 +207,9 @@ try:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.settimeout(90)
     s.bind(('', int(sys.argv[1])))
-    #s.bind(('172.18.112.1',54321))
+    #s.bind(('insert ip address',54321))
     print(f'listening on port {int(sys.argv[1])}')
-    #print(f'listening on port {65432}')
+    #print(f'listening on port {54321}')
     s.listen(5)  # 5 is the number of connections to keep in a queue
 except Exception as e:
     print(f'Exception while setting up socket: {e}')
@@ -204,3 +229,4 @@ else:
         print(f'An exception occurred: {e}')
 finally:
     s.close()
+
