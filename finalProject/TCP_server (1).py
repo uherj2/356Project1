@@ -12,6 +12,9 @@ import json
 #database
 user_db = {}  # username: hashed_password
 
+with open('user_db.json', 'w') as file:
+    json.dump(user_db, file, indent=4)
+
 active_users = {}  # username: connection_id
 
 active_connections = {} # username : cs
@@ -26,14 +29,23 @@ def hash_password(password: str) -> str:
 # store new user in db with hashed password
 def store_user(username: str, password: str):
     with db_lock:
+        #loads user_db from file
+        with open('user_db.json', 'r') as file:
+            user_db = json.load(file)
         if username in user_db:
             return "Username already exists"
         # hash and store password
         user_db[username] = hash_password(password)
+        #writes new user_db into file
+        with open('user_db.json', 'w') as file:
+            json.dump(user_db, file, indent=4)
         return f"User {username} added successfully"
 
 def verify_user(username: str, password: str) -> bool:
     with db_lock:
+        # loads user_db from file
+        with open('user_db.json', 'r') as file:
+            user_db = json.load(file)
         if username not in user_db:
             print("failed username check")
             return False
@@ -43,6 +55,7 @@ def verify_user(username: str, password: str) -> bool:
 # add to active users with connection id
 def add_active_user(username: str, connection_id: int, cs):
     with db_lock:
+
         if username in active_users:
             return f"User {username} is already active"
         active_users[username] = connection_id
@@ -51,8 +64,14 @@ def add_active_user(username: str, connection_id: int, cs):
 
 def del_active_user(username: str):
     with db_lock:
+        # loads user_db from file
+        with open('user_db.json', 'r') as file:
+            user_db = json.load(file)
         if username in active_users:
             del active_users[username]
+            # writes new user_db into file
+            with open('user_db.json', 'w') as file:
+                json.dump(user_db, file, indent=4)
             return f"User {username} removed from active users"
         else:
             return f"User {username} not found in active users"
@@ -69,6 +88,9 @@ def list_active_users():
 
 # simulate segmentation/paging
 def mem_allocation(username: str, block_size: int = 256):
+    # loads user_db from file
+    with open('user_db.json', 'r') as file:
+        user_db = json.load(file)
     # simulate segmentation by allocating blocks
     mem_block = {
         "username": username,
@@ -79,6 +101,9 @@ def mem_allocation(username: str, block_size: int = 256):
 
 # simulate retrieving user memory block
 def get_user_mem_block(username: str):
+    # loads user_db from file
+    with open('user_db.json', 'r') as file:
+        user_db = json.load(file)
     # return user data from 'db'
     if username in user_db:
         return mem_allocation(username)
@@ -89,16 +114,16 @@ def get_user_mem_block(username: str):
 store_user("Username","Password")
 id = set()
 
-def send_all(sender):
+def send_all(message):
     for connectionid in id:
         cs = connectionid[1]
         print(f'cs: {cs}')
-        #cs.send(f'{sender}: Hello\n'.encode('utf-8'))
+        cs.send(f'{message}:\n'.encode('utf-8'))
 
 def send_user(message, recipient):
     cs = active_connections[recipient]
     print(f'cs: {cs}')
-    #cs.send(f'{message}: Hello\n'.encode('utf-8'))
+    cs.send(f'{message}:\n'.encode('utf-8'))
 
 def add_connection_id(connectionid):
     id.add(connectionid)
@@ -139,6 +164,7 @@ def handle_connection(cs, addr):
                 usr = cs.recv(256).decode('utf-8')
                 usr = usr.strip()
                 print(usr)
+
                 if usr in user_db:
                     cs.send("Error: username already exists\n".encode('utf-8'))
                 # handling Password
@@ -149,7 +175,7 @@ def handle_connection(cs, addr):
                     print(psw)
                     print("User added")
                     #adding new user into the system
-                    store_user("Username", "Password")
+                    store_user(usr, psw)
                     add_active_user(usr, connectionid[0], connectionid[1])
                     cs.send("Successfully signed into server\n".encode('utf-8'))
                     # exit loop
@@ -181,8 +207,10 @@ def handle_connection(cs, addr):
         running = True
         while running == True:
             cs.send(f"Active Users: {list_active_users()}\n".encode('utf-8'))
+            print(".")
             #cs.send("Enter recipient or type 'STOP':\n".encode('utf-8'))
             json_packet = cs.recv(256).decode('utf-8')
+            print(".")
             data = json.loads(json_packet)
             print(data)
             if data['action']=="message":
@@ -193,6 +221,8 @@ def handle_connection(cs, addr):
                     msg = msg.strip()
                     print(rec,msg)
                     send_user(msg,rec)
+                else:
+                    cs.send(f"User {rec} is not active:\n".encode('utf-8'))
             elif data['action']=="stop":
                 print("User stopped")
                 running = False
@@ -238,3 +268,4 @@ else:
         print(f'An exception occurred: {e}')
 finally:
     s.close()
+
