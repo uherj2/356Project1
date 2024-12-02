@@ -7,8 +7,25 @@ import sys
 import time
 import threading
 import json
+import random
 
 data = "Recieved:".encode('utf-8')
+
+def memory_Allocation(s):
+    for i in range(1,10):
+        time.sleep(4)
+        if i%2==1:
+            data = {"action": "allocate", "size":random.randint(128,2048)}
+            print(f"Request: {data}")
+        else:
+            data = {"action": "deallocate","address":random.randint(0,100)}
+            print(f"Request: {data}")
+        json_packet = json.dumps(data)
+        s.send(f'{json_packet}\n'.encode('utf-8'))
+        time.sleep(3)
+        msg = s.recv(256).decode('utf-8')
+        print(msg)
+
 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,20 +45,25 @@ else:
 
             print(msg)
             if msg.strip() == "Successfully signed into server":
+                print("Signing in!")
                 loggedIn = True
             elif msg.strip()[len(msg.strip())-1] == ':':
                 inp1 = input(">> ")
                 s.send(f'{inp1}\n'.encode('utf-8'))
 
-
+         print("Starting Memory Allocation")
+         memThread = threading.Thread(target=memory_Allocation, args=[s])
+         memThread.daemon = True
+         memThread.start()
          running = True
          while running == True:
             #read last message
             time.sleep(1)
+            print('.')
             msg = s.recv(256).decode('utf-8')
             print(msg)
 
-            rec = input("Enter recipient or type 'STOP':\n")
+            rec = input("Enter recipient or type 'STOP' or type 'READ':\n")
             if rec == "STOP":
                 data = {"action": "stop"}
                 json_packet = json.dumps(data)
