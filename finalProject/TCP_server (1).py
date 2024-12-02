@@ -7,6 +7,7 @@ import socket
 import threading
 import time
 import hashlib
+import json
 
 #database
 user_db = {}  # username: hashed_password
@@ -92,12 +93,12 @@ def send_all(sender):
     for connectionid in id:
         cs = connectionid[1]
         print(f'cs: {cs}')
-        cs.send(f'{sender}: Hello\n'.encode('utf-8'))
+        #cs.send(f'{sender}: Hello\n'.encode('utf-8'))
 
 def send_user(message, recipient):
     cs = active_connections[recipient]
     print(f'cs: {cs}')
-    cs.send(f'{message}: Hello\n'.encode('utf-8'))
+    #cs.send(f'{message}: Hello\n'.encode('utf-8'))
 
 def add_connection_id(connectionid):
     id.add(connectionid)
@@ -150,7 +151,7 @@ def handle_connection(cs, addr):
                     #adding new user into the system
                     store_user("Username", "Password")
                     add_active_user(usr, connectionid[0], connectionid[1])
-                    cs.send("Successfully added and signed into server\n".encode('utf-8'))
+                    cs.send("Successfully signed into server\n".encode('utf-8'))
                     # exit loop
                     prompt = False
             elif ans.strip() == "Sign in":
@@ -180,17 +181,24 @@ def handle_connection(cs, addr):
         running = True
         while running == True:
             cs.send(f"Active Users: {list_active_users()}\n".encode('utf-8'))
-            cs.send("Enter recipient or type 'STOP':\n".encode('utf-8'))
-            rec = cs.recv(256).decode('utf-8')
-            #break process
-            if(rec.strip()=="STOP"):
-                cs.send("STOP\n".encode('utf-8'))
+            #cs.send("Enter recipient or type 'STOP':\n".encode('utf-8'))
+            json_packet = cs.recv(256).decode('utf-8')
+            data = json.loads(json_packet)
+            print(data)
+            if data['action']=="message":
+                rec = data['recipient']
+                rec = rec.strip()
+                msg  = data['message']
+                msg = msg.strip()
+                print(rec,msg)
+                send_user(msg,rec)
+            elif data['action']=="stop":
                 print("User stopped")
                 running = False
             else:
-                cs.send("Enter message:\n".encode('utf-8'))
-                msg = cs.recv(256).decode('utf-8')
-                send_user(msg,rec.strip())
+                print("JSON Packet ERROR")
+                #cs.send("JSON Packet ERROR!:\n".encode('utf-8'))
+
 
 
     except Exception as e:
@@ -206,10 +214,10 @@ try:
     # This says hey you can reuse the socket after the program is done
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.settimeout(90)
-    s.bind(('', int(sys.argv[1])))
-    #s.bind(('insert ip address',54321))
-    print(f'listening on port {int(sys.argv[1])}')
-    #print(f'listening on port {54321}')
+    #s.bind(('', int(sys.argv[1])))
+    s.bind(('172.18.112.1',54321))
+    #print(f'listening on port {int(sys.argv[1])}')
+    print(f'listening on port {65432}')
     s.listen(5)  # 5 is the number of connections to keep in a queue
 except Exception as e:
     print(f'Exception while setting up socket: {e}')
@@ -229,4 +237,3 @@ else:
         print(f'An exception occurred: {e}')
 finally:
     s.close()
-
