@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+'''HOW TO GET THIS TO RUN: 
+    Near the very bottom of the code the IP and Port number are hard coded
+    If you want to change it you can change it directly or uncomment the line above it 
+    that replaces it with a command line argument'''
 
 print('file is executing')
 
