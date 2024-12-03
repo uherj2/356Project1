@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+# <IP address> <port>
+print('client is running')
+
+import socket 
+import sys
+import time
+import threading
+import json
+import random
+
+data = "Recieved:".encode('utf-8')
+
+def memory_Allocation(s):
+    print("Started")
+    for i in range(1,10):
+        time.sleep(2)
+        #swaps between deallocate or allocate every message
+        if i%2==1:
+            data = {"action": "allocate", "size":random.randint(128,2048)}
+            print(f"Request: {data}")
+        else:
+            data = {"action": "deallocate","address":random.randint(0,100)}
+            print(f"Request: {data}")
+        #sending to server
+        json_packet = json.dumps(data)
+        s.send(f'{json_packet}\n'.encode('utf-8'))
+        #recieving
+        time.sleep(0.1)
+        print("waiting for reception")
+        try:
+            recv = s.recv(256).decode('utf-8')
+            print(recv)
+        except:
+            continue
+
+    print("Ended allocation/deallocation")
+
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(10)
+    #s.connect((sys.argv[1], int(sys.argv[2])))
+    s.connect(('127.0.0.1', 54321))
+except TimeoutError:
+    print('Timed out connecting to server.')
+except Exception as e:
+    print(f'Exception while setting up socket and connecting: {e}')
+else:
+    try:
+         loggedIn = False
+         while loggedIn == False:
+
+            msg = s.recv(256).decode('utf-8')
+
+            print(msg)
+            if msg.strip() == "Successfully signed into server":
+                print("Signing in!")
+                loggedIn = True
+                break
+            elif msg.strip()[len(msg.strip())-1] == ':':
+                inp1 = input(">> ")
+                s.send(f'{inp1}\n'.encode('utf-8'))
+         print("starting message reception thread")
+
+         while loggedIn == True:
+            #read last message
+            time.sleep(1)
+            print('waiting for message:')
+            try:
+                msg = s.recv(256).decode('utf-8')
+                print(msg)
+            except:
+                data = {"action": "reply"}
+                json_packet = json.dumps(data)
+                s.send(f'{json_packet}\n'.encode('utf-8'))
+                continue
+            rec = input("Enter recipient or type 'READ', 'STOP' or 'START' for allocation/deallocation:\n")
+            if rec == "READ":
+                try:
+                    msg = s.recv(256).decode('utf-8')
+                    print(msg)
+                except:
+                    print("No messages received.")
+                    continue
+            if rec == "STOP":
+                data = {"action": "stop"}
+                json_packet = json.dumps(data)
+                s.send(f'{json_packet}\n'.encode('utf-8'))
+                loggedIn == False
+                print("All Done!")
+                break
+            elif rec == "START":
+                memory_Allocation(s)
+            else:
+                msg = input("Enter Message:\n")
+                data = {"action":"message","recipient":rec,"message":msg}
+                json_packet = json.dumps(data)
+                s.send(f'{json_packet}\n'.encode('utf-8'))
+                #checks for message
+
+    except Exception as e:
+        print(f'Exception sending: {e}')
+finally:
+    s.close()
+
+#notes: READ not properly working
+#memory allocation thread not working
+#make  incoming messages a thread
